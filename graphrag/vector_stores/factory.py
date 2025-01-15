@@ -10,7 +10,8 @@ from graphrag.vector_stores.azure_ai_search import AzureAISearchVectorStore
 from graphrag.vector_stores.base import BaseVectorStore
 from graphrag.vector_stores.cosmosdb import CosmosDBVectoreStore
 from graphrag.vector_stores.lancedb import LanceDBVectorStore
-from graphrag.vector_stores.turbopuffer import turbopufferDBVectorStore
+from graphrag.vector_stores.turbopuffer import TurboPufferVectorStore
+
 
 class VectorStoreType(str, Enum):
     """The supported vector store types."""
@@ -47,7 +48,7 @@ class VectorStoreFactory:
             case VectorStoreType.CosmosDB:
                 return CosmosDBVectoreStore(**kwargs)
             case VectorStoreType.turbopuffer:
-                return turbopufferDBVectorStore(**kwargs)
+                return TurboPufferVectorStore(**kwargs)
             case _:
                 if vector_store_type in cls.vector_store_types:
                     return cls.vector_store_types[vector_store_type](**kwargs)

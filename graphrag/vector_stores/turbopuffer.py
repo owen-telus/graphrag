@@ -1,30 +1,37 @@
-import turbopuffer as tpuf 
-import json 
-import os 
-from typing import Any 
+
+"""TurboPuffer vector storage implementation."""
+
+import os
+from typing import Any
+
+import turbopuffer as tpuf
 
 from graphrag.model.types import TextEmbedder
-
 from graphrag.vector_stores.base import (
-    DEFAULT_VECTOR_SIZE,
     BaseVectorStore,
     VectorStoreDocument,
     VectorStoreSearchResult,
 )
 
-class turbopufferDBVectorStore(BaseVectorStore):
-    """ turbopuffer vector storage implementation."""
+
+class TurboPufferVectorStore(BaseVectorStore):
+    """TurboPuffer vector storage implementation."""
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
     def connect(self, **kwargs: Any) -> Any:
         """Connect to the vector storage."""
-        tpuf.api_base_url = kwargs.get("TURBOPUFFER_API_BASE_URL") or os.environ.get("TURBOPUFFER_API_BASE_URL")
-        tpuf.api_key = kwargs.get("TURBOPUFFER_API_KEY") or os.environ.get("TURBOPUFFER_API_KEY")
+        tpuf.api_base_url = kwargs.get("TURBOPUFFER_API_BASE_URL") or os.environ.get(
+            "TURBOPUFFER_API_BASE_URL"
+        )
+        tpuf.api_key = kwargs.get("TURBOPUFFER_API_KEY") or os.environ.get(
+            "TURBOPUFFER_API_KEY"
+        )
 
         if not tpuf.api_base_url or not tpuf.api_key:
-            raise ValueError("TURBOPUFFER_API_BASE_URL and TURBOPUFFER_API_KEY must be set in either kwargs or environment variables")
+            error_msg = "TURBOPUFFER_API_BASE_URL and TURBOPUFFER_API_KEY must be set in either kwargs or environment variables"
+            raise ValueError(error_msg)
         self.document_collection = tpuf.Namespace(self.collection_name)
 
     def load_documents(
@@ -33,7 +40,10 @@ class turbopufferDBVectorStore(BaseVectorStore):
         """Load documents into vector storage."""
         for document in documents:
             if "text" in document.attributes:
-                raise ValueError("text is a reserved attribute name and cannot be used in attributes")
+                error_msg = (
+                    "text is a reserved attribute name and cannot be used in attributes"
+                )
+                raise ValueError(error_msg)
         data = [
             tpuf.VectorRow(
                 id=document.id,
@@ -43,48 +53,45 @@ class turbopufferDBVectorStore(BaseVectorStore):
                     **document.attributes,
                 },
             )
-            for document in documents 
+            for document in documents
             if document.vector is not None
         ]
-        
+
         if overwrite:
             self.document_collection.delete_all()
             self.document_collection.upsert(
-                                            data, 
-                                            distance_metric="cosine_distance"
-                                            )
+                data,
+                distance_metric="cosine_distance",
+            )
         else:
             self.document_collection.upsert(
-                                            data, 
-                                            distance_metric="cosine_distance"
-                                            )
-
+                data,
+                distance_metric="cosine_distance",
+            )
 
     def similarity_search_by_vector(
         self, query_embedding: list[float], k: int = 10, **kwargs: Any
     ) -> list[VectorStoreSearchResult]:
         """Perform a vector-based similarity search."""
-
         docs = self.document_collection.query(
             vector=query_embedding,
             top_k=k,
             include_attributes=True,
             include_vectors=True,
-            filters=self.query_filter
+            filters=self.query_filter,
         )
-        
-        
+
         results = []
         for doc in docs:
             # Get text from attributes
             text_value = doc.attributes.get("text") if doc.attributes else None
             text = str(text_value) if text_value is not None else None
-            
+
             # Copy attributes and remove text since it's handled separately
             attributes = doc.attributes.copy() if doc.attributes else {}
             if "text" in attributes:
                 del attributes["text"]
-            
+
             # Create document
             document = VectorStoreDocument(
                 id=doc.id,
@@ -92,17 +99,14 @@ class turbopufferDBVectorStore(BaseVectorStore):
                 vector=doc.vector,
                 attributes=attributes,
             )
-            
+
             # Calculate similarity score from distance
             # cosine_distance is between 0 (identical) and 2 (opposite)
             # Convert to similarity score between 0 and 1
             score = 1 - (doc.dist / 2) if doc.dist is not None else 0
-            
-            results.append(VectorStoreSearchResult(
-                document=document,
-                score=score
-            ))
-            
+
+            results.append(VectorStoreSearchResult(document=document, score=score))
+
         return results
 
     def similarity_search_by_text(
@@ -121,16 +125,16 @@ class turbopufferDBVectorStore(BaseVectorStore):
         else:
             self.query_filter = ("id", "In", include_ids)
         return self.query_filter
-    
+
     def search_by_id(self, id: str) -> VectorStoreDocument:
         """Search for a document by id."""
-        query_filter = ('id', 'Eq', id)
+        query_filter = ("id", "Eq", id)
         result = self.document_collection.query(
-                                                filters=query_filter,
-                                                top_k=1, # should only be 1 result for a given id
-                                                include_attributes=True,
-                                                include_vectors=True
-                                                )
+            filters=query_filter,
+            top_k=1,  # should only be 1 result for a given id
+            include_attributes=True,
+            include_vectors=True,
+        )
 
         if result and len(result) > 0:
             row = result[0]
