@@ -57,7 +57,7 @@ class TurboPufferVectorStore(BaseVectorStore):
             if document.vector is not None
         ]
 
-        if overwrite:
+        if overwrite and self.document_collection.exists():
             self.document_collection.delete_all()
             self.document_collection.upsert(
                 data,
