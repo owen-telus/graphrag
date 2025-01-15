@@ -22,10 +22,10 @@ class TurboPufferVectorStore(BaseVectorStore):
 
     def connect(self, **kwargs: Any) -> Any:
         """Connect to the vector storage."""
-        tpuf.api_base_url = kwargs.get("TURBOPUFFER_API_BASE_URL") or os.environ.get(
+        tpuf.api_base_url = kwargs.get("api_base") or os.environ.get(
             "TURBOPUFFER_API_BASE_URL"
         )
-        tpuf.api_key = kwargs.get("TURBOPUFFER_API_KEY") or os.environ.get(
+        tpuf.api_key = kwargs.get("api_key") or os.environ.get(
             "TURBOPUFFER_API_KEY"
         )
 

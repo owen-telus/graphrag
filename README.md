@@ -1,3 +1,20 @@
+# Fork of GraphRAG to utilize turbopuffer as the Vector DB
+
+To utilize turbopuffer, update `vector_store` in settings.yaml to the following 
+```
+embeddings:
+  async_mode: threaded # or asyncio
+  vector_store: 
+    type: turbopuffer
+    api_base: https://vectors.fuelix.ai/canada-east1
+    api_key: ${TURBOPUFFER_API_KEY}
+    container_name: user-jerUoi3zCwDDP8vahnqi-graphrag-exp-2
+    overwrite: true
+
+```
+Store `TURBOPUFFER_API_KEY` in the .env
+
+
 # GraphRAG
 
 👉 [Use the GraphRAG Accelerator solution](https://github.com/Azure-Samples/graphrag-accelerator) <br/>
